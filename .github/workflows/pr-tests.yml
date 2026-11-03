@@ -1,0 +1,58 @@
+name: PR Tests
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Maven tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Run tests
+        run: ./mvnw --batch-mode --no-transfer-progress verify
+
+  sonar:
+    name: SonarQube analysis
+    # Runs on the local Mac runner so it can reach http://localhost:9000
+    runs-on: self-hosted
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # full history: Sonar needs it for new-code analysis
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Run tests with coverage
+        run: ./mvnw --batch-mode --no-transfer-progress clean verify
+
+      - name: SonarQube scan (waits for quality gate)
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./mvnw --batch-mode --no-transfer-progress sonar:sonar -Dsonar.qualitygate.wait=true
