@@ -1,0 +1,12 @@
+/target/
+.env
+.env.*
+!.env.example
+.scannerwork/
+.sonar/
+.idea/
+*.iml
+.Ds_Store
+.mvn/wrappers
+.coda
+database
